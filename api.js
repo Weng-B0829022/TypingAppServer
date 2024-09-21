@@ -1,5 +1,5 @@
 const express = require('express');
-const { getCurrentTime, getChineseCharacters, getVariantCharacters  } = require('./database');
+const { getCurrentTime, getChineseCharacters, getVariantCharacters, getCharactersWithVariants  } = require('./database');
 
 
 const router = express.Router();
@@ -38,5 +38,14 @@ router.get('/variant_characters', (req, res) => {
     }
   });
 });
-
+router.get('/characters-with-variants', (req, res) => {
+  const grade = req.query.grade;
+  getCharactersWithVariants(grade, (err, data) => {
+      if (err) {
+          res.status(500).json({ error: 'Internal Server Error' });
+      } else {
+          res.json(data);
+      }
+  });
+});
 module.exports = router;
