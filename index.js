@@ -16,7 +16,7 @@ const corsOptions = {
     const whitelist = [
       'http://163.25.111.55:5001',
       'http://192.168.0.221:5001',
-      'http://localhost:5001',
+      'http://localhost:5173',
     ];
     
     if (whitelist.indexOf(origin) !== -1 || !origin) {
