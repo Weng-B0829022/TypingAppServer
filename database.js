@@ -102,8 +102,8 @@ async function getCharactersWithVariants(grade, callback) {
                 const result = await Promise.all(chineseRows.map(async (chineseRow) => {
                     const variants = variantRows.filter(variantRow => variantRow.origin_word === chineseRow.character);
                     const variantImages = await Promise.all(variants.map(async (variant) => {
-                        //MacOSpath = variant.file_path.reaplce(/\\/g,'/');
-                        const imagePath = path.join(__dirname, 'words', variant.file_path);
+                    const normalizedFilePath = variant.file_path.replace(/\\/g, '/');
+                    const imagePath = path.join(__dirname, 'words', normalizedFilePath);
                         try {
                             const imageBuffer = await sharp(imagePath)
                                 .resize(100) // Resize to 100px width (height will be adjusted automatically)
