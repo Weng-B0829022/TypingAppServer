@@ -13,6 +13,68 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
+function saveQuizResultToDatabase(quizResult) {
+    const generateId = (length = 10) => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    };
+    const id = generateId();
+    const { 
+        grade, 
+        level, 
+        number,
+        mode,
+        startCountdown,
+        queIntervel,
+        pronunciationType,
+        questionFormat,
+        answerTiming,
+        isRetryIncorrect,
+        errorRetry,
+        questions,
+        answerInfo,
+        name,
+        researchCode
+    } = quizResult;
+
+    const query = `
+        INSERT INTO quiz_results (
+            id, grade, level, number, mode, start_countdown, que_intervel,
+            pronunciation_type, question_format, answer_timing,
+            is_retry_incorrect, error_retry, questions, answer_info, name, research_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    return new Promise((resolve, reject) => {
+        db.run(query, [
+            id,
+            grade,
+            level,
+            number,
+            mode,
+            startCountdown,
+            queIntervel,
+            pronunciationType,
+            questionFormat,
+            answerTiming,
+            isRetryIncorrect,
+            errorRetry,
+            JSON.stringify(questions),
+            JSON.stringify(answerInfo),
+            name,
+            researchCode
+        ], function(err) {
+            if (err) {
+                console.error('Error saving quiz result:', err);
+                reject(err);
+            } else {
+                console.log('Saved quiz result with ID:', id);
+                resolve(id);
+            }
+        });
+    });
+}
+
 function getCurrentTime() {
     return new Promise((resolve, reject) => {
         db.get('SELECT datetime("now") as time', (err, row) => {
@@ -139,9 +201,71 @@ async function getCharactersWithVariants(grade, callback) {
         });
     });
 }
+
+async function getQuizResults() {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM quiz_results', [], (err, rows) => {
+            if (err) {
+                console.error('Error fetching quiz results:', err);
+                reject(err);
+            } else {
+                const processedRows = rows.map(row => {
+                    const questions = JSON.parse(row.questions).map(q => {
+                        const { display, options, ...questionWithoutDisplay } = q;
+                        return questionWithoutDisplay;
+                    });
+                    const answerInfo = JSON.parse(row.answer_info).map(ans => {
+                        const { display, ...answerInfoWithoutDisplay } = ans;
+                        return answerInfoWithoutDisplay;
+                    });
+                    const { answer_info, ...rowWithoutAnswerInfo } = row;
+                    return { ...rowWithoutAnswerInfo, questions, answerInfo };
+                });
+                resolve(processedRows);
+            }
+        });
+    });
+}
+
+async function getQuizResultById(id) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM quiz_results WHERE id = ?', [id], (err, row) => {
+            if (err) {
+                console.error('Error fetching quiz result:', err);
+                reject(err);
+            } else if (!row) {
+                reject(new Error('Quiz result not found'));
+            } else {
+                // 保持完整的数据，包括 questions 中的 display 字段
+                row.questions = JSON.parse(row.questions);
+                row.answerInfo = JSON.parse(row.answer_info);
+                const { answer_info, ...rowWithoutAnswerInfo } = row;
+                resolve(rowWithoutAnswerInfo);
+            }
+        });
+    });
+}
+
+async function deleteQuizResult(id) {
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM quiz_results WHERE id = ?', [id], (err) => {
+            if (err) {
+                console.error('Error deleting quiz result:', err);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
 module.exports = {
+    saveQuizResultToDatabase,
     getCurrentTime,
     getChineseCharacters,
     getVariantCharacters,
-    getCharactersWithVariants
+    getCharactersWithVariants,
+    getQuizResults,
+    getQuizResultById,
+    deleteQuizResult
 };
