@@ -34,15 +34,16 @@ function saveQuizResultToDatabase(quizResult) {
         questions,
         answerInfo,
         name,
-        researchCode
+        researchCode,
+        characterType
     } = quizResult;
 
     const query = `
         INSERT INTO quiz_results (
             id, grade, level, number, mode, start_countdown, que_intervel,
             pronunciation_type, question_format, answer_timing,
-            is_retry_incorrect, error_retry, questions, answer_info, name, research_code
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            is_retry_incorrect, error_retry, questions, answer_info, name, research_code, characterType
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     return new Promise((resolve, reject) => {
@@ -62,7 +63,8 @@ function saveQuizResultToDatabase(quizResult) {
             JSON.stringify(questions),
             JSON.stringify(answerInfo),
             name,
-            researchCode
+            researchCode,
+            characterType
         ], function(err) {
             if (err) {
                 console.error('Error saving quiz result:', err);
